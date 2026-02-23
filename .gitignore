@@ -1,0 +1,16 @@
+.env.development
+# ---- Python cache ----
+__pycache__/
+*.pyc
+*.pyo
+
+# ---- Environment variables / secrets ----
+.env
+
+# ---- OS junk ----
+.DS_Store
+Thumbs.db
+
+# ---- Editor configs (optional) ----
+.vscode/
+.idea/
