@@ -145,12 +145,32 @@ def git_commit_thread():
     
     def run():
         try:
+            # 1. Stage changes
             subprocess.run(["git", "add", "."], check=True)
-            subprocess.run(["git", "commit", "-m", f"Daily log update: {date.today()}"], check=True, capture_output=True)
+            
+            # 2. Attempt commit
+            # We use capture_output to check what Git says without crashing
+            commit_proc = subprocess.run(
+                ["git", "commit", "-m", f"Daily log update: {date.today()}"], 
+                capture_output=True, 
+                text=True
+            )
+            
+            # If returncode is 1, it usually means "nothing to commit"
+            if commit_proc.returncode != 0 and "nothing to commit" in commit_proc.stdout:
+                root.after(0, lambda: custom_popup("Status", "Everything is already up to date! ✨", HIGHLIGHT))
+                return
+
+            # 3. Push changes
             subprocess.run(["git", "push"], check=True, capture_output=True)
             root.after(0, lambda: custom_popup("Git Success", "Pushed to GitHub cloud 🚀", SUCCESS))
+            
+        except subprocess.CalledProcessError as e:
+            # This catches actual errors (like no internet or auth issues)
+            error_msg = e.stderr.decode() if e.stderr else "Check Git init status."
+            root.after(0, lambda: custom_popup("Git Error", f"Details: {error_msg[:50]}...", ERROR))
         except Exception as e:
-            root.after(0, lambda: custom_popup("Git Error", "Check terminal or Git init status.", ERROR))
+            root.after(0, lambda: custom_popup("Error", str(e), ERROR))
         finally:
             root.after(0, hide_loading)
 
