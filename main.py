@@ -116,23 +116,46 @@ def save_log():
         custom_popup("Error", str(e), ERROR)
 
 def generate_summary_thread():
-    file_path, _ = get_today_file()
+    selected_date = date_entry.get().strip()
+
+    # Decide which file to use
+    if selected_date:
+        try:
+            # Validate format
+            datetime.strptime(selected_date, "%Y-%m-%d")
+            file_path = os.path.join(LOG_DIR, f"{selected_date}.md")
+        except ValueError:
+            custom_popup("Invalid Date", "Use format YYYY-MM-DD", ERROR)
+            return
+    else:
+        file_path, _ = get_today_file()
+
     if not os.path.exists(file_path):
-        custom_popup("Missing Log", "Save a log entry first!", HIGHLIGHT)
+        custom_popup("Missing Log", "No log found for selected date.", HIGHLIGHT)
         return
 
     show_loading("AI is thinking...")
-    
+
     def run():
         try:
-            with open(file_path, "r", encoding="utf-8") as f: content = f.read()
-            prompt = f"Summarize this work log into professional bullet points, with exactly 2 sentences for 'Learnings' and 2 sentences for 'Blockers & Risks'.\n\nContent:\n{content}"
-            
-            response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
-            
-            # Update UI from main thread
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()[-4000:]  # prevent huge prompt timeouts
+
+            prompt = (
+                "Summarize this work log into professional bullet points, "
+                "with exactly 2 sentences for 'Learnings' and 2 sentences for "
+                "'Blockers & Risks'.\n\nContent:\n"
+                + content
+            )
+
+            response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt
+            )
+
             root.after(0, lambda: summary_box.delete("1.0", tk.END))
             root.after(0, lambda: summary_box.insert(tk.END, response.text.strip()))
+
         except Exception as e:
             root.after(0, lambda: custom_popup("AI Error", str(e), ERROR))
         finally:
@@ -220,6 +243,16 @@ did_text = create_styled_section("COMPLETED TASKS", 5)
 challenges_text = create_styled_section("CHALLENGES / BLOCKERS", 4)
 learned_text = create_styled_section("KEY LEARNINGS", 4)
 
+btn_frame = tk.Frame(scrollable_frame, bg=BG_MAIN)
+# Optional Date Selector for AI
+tk.Label(scrollable_frame, text="OPTIONAL DATE FOR AI SUMMARY (YYYY-MM-DD)", 
+         bg=BG_MAIN, fg=HIGHLIGHT, font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=40, pady=(10, 5))
+
+date_entry = tk.Entry(scrollable_frame, bg=BG_INPUT, fg=FG_TEXT,
+                      font=("Consolas", 11), relief="flat",
+                      insertbackground=FG_TEXT, highlightthickness=1,
+                      highlightbackground="#4C566A")
+date_entry.pack(fill="x", padx=40)
 # Buttons
 btn_frame = tk.Frame(scrollable_frame, bg=BG_MAIN)
 btn_frame.pack(fill="x", padx=40, pady=25)
