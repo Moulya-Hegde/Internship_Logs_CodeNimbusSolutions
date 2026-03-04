@@ -14,7 +14,7 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # ---------------- CONFIG & AESTHETICS ----------------
 LOG_DIR = "logs"
-MODEL_NAME = "gemini-3-flash-preview"
+MODEL_NAME = "gemini-2.5-flash"
 
 BG_MAIN = "#2E3440"
 BG_INPUT = "#3B4252"
@@ -157,7 +157,7 @@ def generate_summary_thread():
             root.after(0, lambda: summary_box.insert(tk.END, response.text.strip()))
 
         except Exception as e:
-            root.after(0, lambda: custom_popup("AI Error", str(e), ERROR))
+            root.after(0, lambda: custom_popup("AI Error","AI failed to generate summary: ", ERROR))
         finally:
             root.after(0, hide_loading)
 
