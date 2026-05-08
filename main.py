@@ -158,6 +158,7 @@ def generate_summary_thread():
 
         except Exception as e:
             root.after(0, lambda: custom_popup("AI Error","AI failed to generate summary: ", ERROR))
+            print(e)
         finally:
             root.after(0, hide_loading)
 
